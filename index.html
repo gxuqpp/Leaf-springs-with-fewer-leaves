@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>少片变截面钢板弹簧设计计算</title>
+<style>
+:root{
+  --bg:#181818;--s1:#222;--s2:#2b2b2b;--s3:#363636;--s4:#424242;
+  --bd:#484848;--bd2:#5c5c5c;
+  --tx:#f0f0f0;--tx2:#c0c0c0;--tx3:#888;
+  --gr:#4caf7d;--grb:#1a3328;
+  --bl:#5b9bd5;--blb:#152033;
+  --ye:#f0c040;--or:#e87a3a;--re:#e05555;--reb:#331515;
+  --mo:'Courier New',monospace;
+  --sa:'Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sa);background:var(--bg);color:var(--tx);min-height:100vh;font-size:17px;line-height:1.65}
+
+.topbar{background:#111;border-bottom:2px solid var(--gr);padding:1rem 2rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.topbar h1{font-size:22px;font-weight:700}
+.topbar .sub{font-size:14px;color:var(--tx3);font-family:var(--mo)}
+
+.page{max-width:1400px;margin:0 auto;padding:1.4rem 1.5rem 4rem}
+
+.mode-tabs{display:flex;gap:10px;margin-bottom:1.3rem}
+.mtab{flex:1;max-width:320px;padding:13px 12px;border:1px solid var(--bd2);border-radius:10px;
+  background:var(--s2);cursor:pointer;text-align:center;transition:all .15s}
+.mtab:hover{border-color:var(--gr)}
+.mtab.on{border:2px solid var(--gr);background:var(--grb)}
+.mtab .icon{font-size:26px;display:block;margin-bottom:4px}
+.mtab .mname{font-size:17px;font-weight:700;color:var(--tx3)}
+.mtab .msub{font-size:13px;color:var(--tx3);margin-top:3px;line-height:1.4;font-family:var(--mo)}
+.mtab.on .mname,.mtab.on .msub{color:var(--gr)}
+
+.sec{display:none}.sec.on{display:block}
+
+.layout{display:grid;grid-template-columns:360px 1fr;gap:1.3rem;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+.ch{background:var(--s3);border-bottom:1px solid var(--bd);padding:.65rem 1.1rem;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ch.gr{color:var(--gr)}.ch.bl{color:var(--bl)}.ch.ye{color:var(--ye)}.ch.or{color:var(--or)}
+.cb{padding:1.1rem}
+
+.f{margin-bottom:.85rem}.f:last-child{margin-bottom:0}
+.f label{display:block;font-size:15px;font-weight:600;color:var(--tx2);margin-bottom:4px}
+.f input,.f select{width:100%;padding:9px 11px;border:1px solid var(--bd2);border-radius:6px;
+  background:var(--s3);color:var(--tx);font-size:17px;font-family:var(--mo);transition:border-color .15s}
+.f input:focus,.f select:focus{outline:none;border-color:var(--gr);box-shadow:0 0 0 3px rgba(76,175,125,.14)}
+.f .hint{font-size:13px;color:var(--tx3);margin-top:3px}
+.f .hint b{color:var(--ye)}
+.sep{height:1px;background:var(--bd);margin:.85rem 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.btn{width:100%;padding:13px;background:var(--gr);color:#0a1f14;border:none;border-radius:8px;
+  font-size:18px;font-weight:700;cursor:pointer;letter-spacing:.05em;transition:background .15s;margin-top:.4rem}
+.btn:hover{background:#5cc990}
+
+.fbox{background:var(--s3);border-left:3px solid var(--ye);border-radius:0 8px 8px 0;padding:.8rem 1rem;margin-bottom:.8rem}
+.fbox .ft{font-size:13px;font-weight:700;color:var(--tx3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.fbox .fl{font-size:15px;font-family:var(--mo);color:var(--ye);line-height:2}
+.fbox .fs{font-size:13px;color:var(--tx3);margin-top:3px;line-height:1.7}
+
+.mrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-bottom:1rem}
+.mc{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:.8rem 1rem}
+.mc.gr{border-color:var(--gr);background:var(--grb)}.mc.bl{border-color:var(--bl);background:var(--blb)}
+.mc.re{border-color:var(--re);background:var(--reb)}
+.mc .ml{font-size:13px;color:var(--tx3);margin-bottom:3px;font-weight:600}
+.mc .mv{font-size:24px;font-weight:700;font-family:var(--mo);color:var(--gr)}
+.mc.bl .mv{color:var(--bl)}.mc.re .mv{color:var(--re)}.mc .mu{font-size:13px;color:var(--tx3)}
+
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:.85rem 1.1rem;
+  display:grid;grid-template-columns:36px 1fr auto;gap:11px;align-items:center}
+.snum{width:36px;height:36px;border-radius:50%;background:var(--s3);border:1px solid var(--bd2);
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--tx3);flex-shrink:0}
+.snum.done{background:var(--grb);border-color:var(--gr);color:var(--gr)}
+.sbody .sn{font-size:14px;font-weight:700;color:var(--tx2);margin-bottom:2px}
+.sbody .sf{font-size:13px;font-family:var(--mo);color:var(--tx3)}
+.sv{text-align:right;white-space:nowrap}
+.sv .val{font-size:21px;font-weight:700;font-family:var(--mo);color:var(--ye)}
+.sv .unit{font-size:12px;color:var(--tx3)}
+
+.banner{border-radius:10px;padding:1.1rem 1.4rem;margin-top:1rem;display:flex;align-items:center;gap:1.1rem}
+.banner.pass{background:var(--grb);border:2px solid var(--gr)}
+.banner.fail{background:var(--reb);border:2px solid var(--re)}
+.banner .bico{font-size:34px;flex-shrink:0}
+.banner .btit{font-size:19px;font-weight:700}
+.banner.pass .btit{color:var(--gr)}.banner.fail .btit{color:var(--re)}
+.banner .bsub{font-size:14px;color:var(--tx2);margin-top:4px;line-height:1.6}
+
+/* SVG spring canvas */
+.spring-canvas{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:.8rem;margin-bottom:1rem;overflow-x:auto}
+.spring-canvas svg{display:block;margin:0 auto}
+.ph{background:var(--s1);border:2px dashed var(--bd2);border-radius:10px;padding:3.5rem;
+  text-align:center;color:var(--tx3);font-size:17px;line-height:2.2}
+.ph .big{font-size:50px;opacity:.22;margin-bottom:.4rem}
+
+/* stress plot */
+.plot-wrap{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1rem;margin-bottom:1rem}
+.plot-title{font-size:15px;font-weight:700;color:var(--tx2);margin-bottom:.7rem}
+user-select: none
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>少片变截面钢板弹簧设计计算</h1>
+  <span class="sub">《汽车设计》第6版 式(7-18)~(7-22) · 抛物线形 · 折线形</span>
+</div>
+
+<div class="page">
+
+  <div class="mode-tabs">
+    <button class="mtab on" data-m="para">
+      <span class="icon">〜</span>
+      <span class="mname">抛物线形</span>
+      <span class="msub">h_x = h₂(x/l₂)^0.5<br>均匀应力分布 · 式(7-18)(7-19)</span>
+    </button>
+    <button class="mtab" data-m="line">
+      <span class="icon">◿</span>
+      <span class="mname">折线形</span>
+      <span class="msub">h_x = A'x + B'<br>分段线性厚度 · 式(7-18)(7-20~22)</span>
+    </button>
+  </div>
+
+  <!-- ===== PARABOLIC ===== -->
+  <div class="sec on" id="para">
+    <div class="layout">
+      <div>
+        <div class="card">
+          <div class="ch gr">抛物线形参数</div>
+          <div class="cb">
+            <div class="fbox">
+              <div class="ft">式(7-18) 单片刚度</div>
+              <div class="fl">c = 6EJ₂ξ / {l³[1+(l₂/l)³k]}</div>
+              <div class="fs">k = 1−(h₁/h₂)³ · J₂ = bh₂³/12</div>
+            </div>
+            <div class="fbox" style="border-left-color:var(--or)">
+              <div class="ft">式(7-19) 均匀应力</div>
+              <div class="fl" style="color:var(--or)">σ = 6F_s·l₂ / (b·h₂²)</div>
+              <div class="fs">抛物线区段内各点应力相等</div>
+            </div>
+            <div class="two">
+              <div class="f"><label>E (MPa)</label><input type="number" id="p_E" value="200000" min="100000"></div>
+              <div class="f"><label>修正系数 ξ</label><input type="number" id="p_xi" value="0.92" min="0.5" max="1" step="0.01"></div>
+            </div>
+            <div class="two">
+              <div class="f"><label>片宽 b (mm)</label><input type="number" id="p_b" value="90" min="10"></div>
+              <div class="f"><label>片数 n</label><input type="number" id="p_n" value="1" min="1" max="10"><span class="hint">n 片时刚度 × n</span></div>
+            </div>
+            <div class="sep"></div>
+            <div class="two">
+              <div class="f"><label>薄端厚度 h₁ (mm)</label><input type="number" id="p_h1" value="8" min="1" step="0.5"><span class="hint">端部（负荷端）</span></div>
+              <div class="f"><label>厚端厚度 h₂ (mm)</label><input type="number" id="p_h2" value="20" min="1" step="0.5"><span class="hint">根部（固支端）</span></div>
+            </div>
+            <div class="sep"></div>
+            <div class="f"><label>半跨长度 l (mm)</label><input type="number" id="p_l" value="600" min="10"><span class="hint">弹簧中心到载荷作用点的距离</span></div>
+            <div class="f"><label>抛物线段长度 l₂ (mm)</label><input type="number" id="p_l2" value="550" min="10"><span class="hint">从负荷端量起，l₂ ≤ l；l₁ = l − l₂ 为薄端常截面段</span></div>
+            <div class="sep"></div>
+            <div class="f"><label>弹簧端部载荷 F_s (N)</label><input type="number" id="p_Fs" value="5000" min="1"></div>
+            <div class="f"><label>许用应力 [σ] (MPa)</label><input type="number" id="p_sig" value="700" min="100"><span class="hint">变截面簧一般取 600~800 MPa</span></div>
+            <button class="btn" onclick="calcPara()">▶  计算抛物线形少片簧</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div id="para-result"><div class="ph"><div class="big">〜</div>设置参数后点击「计算」查看结果</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LINEAR ===== -->
+  <div class="sec" id="line">
+    <div class="layout">
+      <div>
+        <div class="card">
+          <div class="ch bl">折线形参数</div>
+          <div class="cb">
+            <div class="fbox" style="border-left-color:var(--bl)">
+              <div class="ft">式(7-18) + 式(7-20) 折线形刚度</div>
+              <div class="fl" style="color:var(--bl)">c = 6EJ₂ξ / {l³[1+(l₂/l)³k']}</div>
+              <div class="fs">k' 由式(7-20)计算 · α=l₁/l₂, β=h₁/h₂, γ=α/β</div>
+            </div>
+            <div class="fbox" style="border-left-color:var(--or)">
+              <div class="ft">式(7-21) / (7-22) 最大应力</div>
+              <div class="fl" style="color:var(--or)">若 l₁>l₂(2β−1) 或 2h₁&lt;h₂：σ=3Fs/(2bA'B')</div>
+              <div class="fl" style="color:var(--or)">否则（B点）：σ=3Fs·l₂/(2bh₂²)</div>
+            </div>
+            <div class="two">
+              <div class="f"><label>E (MPa)</label><input type="number" id="l_E" value="200000" min="100000"></div>
+              <div class="f"><label>修正系数 ξ</label><input type="number" id="l_xi" value="0.92" min="0.5" max="1" step="0.01"></div>
+            </div>
+            <div class="two">
+              <div class="f"><label>片宽 b (mm)</label><input type="number" id="l_b" value="90" min="10"></div>
+              <div class="f"><label>片数 n</label><input type="number" id="l_n" value="1" min="1" max="10"></div>
+            </div>
+            <div class="sep"></div>
+            <div class="two">
+              <div class="f"><label>薄端厚度 h₁ (mm)</label><input type="number" id="l_h1" value="10" min="1" step="0.5"><span class="hint">x=l₁ 处</span></div>
+              <div class="f"><label>厚端厚度 h₂ (mm)</label><input type="number" id="l_h2" value="20" min="1" step="0.5"><span class="hint">x=l₂ 处</span></div>
+            </div>
+            <div class="sep"></div>
+            <div class="f"><label>半跨长度 l (mm)</label><input type="number" id="l_l" value="700" min="10"></div>
+            <div class="two">
+              <div class="f"><label>薄端常截面 l₁ (mm)</label><input type="number" id="l_l1" value="100" min="0"><span class="hint">从负荷端起，常截面段</span></div>
+              <div class="f"><label>锥段末端 l₂ (mm)</label><input type="number" id="l_l2" value="550" min="10"><span class="hint">从负荷端量起，l₂ 处厚度为 h₂</span></div>
+            </div>
+            <div class="sep"></div>
+            <div class="f"><label>弹簧端部载荷 F_s (N)</label><input type="number" id="l_Fs" value="5000" min="1"></div>
+            <div class="f"><label>许用应力 [σ] (MPa)</label><input type="number" id="l_sig" value="700" min="100"></div>
+            <button class="btn" style="background:var(--bl);color:#fff" onclick="calcLine()">▶  计算折线形少片簧</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div id="line-result"><div class="ph"><div class="big">◿</div>设置参数后点击「计算」查看结果</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.mtab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.id===b.dataset.m));
+}));
+const V=id=>parseFloat(document.getElementById(id).value)||0;
+const VI=id=>parseInt(document.getElementById(id).value)||1;
+const fmt=(x,d=3)=>isFinite(x)?x.toFixed(d):'—';
+
+function step(num,name,formula,val,unit){
+  return`<div class="step"><div class="snum done">${num}</div>
+    <div class="sbody"><div class="sn">${name}</div><div class="sf">${formula}</div></div>
+    <div class="sv"><div class="val">${val}</div><div class="unit">${unit}</div></div></div>`;
+}
+
+// ─────────────────────────────────────────────
+// Spring shape SVG
+// ─────────────────────────────────────────────
+function buildSVG(type, l, l1, l2, h1, h2, Fs, A_pr, B_pr) {
+  const W=680, H=200, ml=60, mr=80, mt=20, mb=40;
+  const dw=W-ml-mr, dh=H-mt-mb;
+  const cx=mt+dh/2; // center y
+  const scX=dw/l;
+  // max display thickness
+  const maxH=h2;
+  const scH=(dh/2-4)/maxH;
+
+  // generate profile points (x from load end=0 to root end=l)
+  const pts_top=[], pts_bot=[];
+  const N=300;
+  for(let i=0;i<=N;i++){
+    const x_load=i/N*l; // distance from load end
+    let h;
+    if(x_load<=l-l2) h=h1; // constant thick section near root (x_load > l2 means near root)
+      // Wait: thick end at root (x_load=l), so "near root" means x_load close to l
+      // constant h2 section: x_load ∈ [l2, l]
+      // taper section: x_load ∈ [l1_sec, l2]
+      // constant h1 section: x_load ∈ [0, l1_sec]
+    // Actually redoing: thick end at x_load=l, thin end at x_load=0
+    // l2 is the distance from load end where parabola ends (h=h2 there)
+    // For x_load > l2: constant h2 (near root)
+    // For l1_sec <= x_load <= l2: variable
+    // For x_load < l1_sec: constant h1 (near load)
+    const l1_sec = l - l2; // l1 in the formula = l-l2 for parabolic, but l1_sec=l1 for linear
+    if(type==='para'){
+      if(x_load<=(l-l2)) h=h1; // near load end
+      else if(x_load<=l2) h=Math.max(h2*Math.sqrt(x_load/l2), h1);
+      else h=h2; // beyond l2 is actually: x_load > l2 → near root = h2
+    } else {
+      // linear: x_load ∈ [0,l1]: h=h1; [l1,l2]: taper; [l2,l]: h=h2
+      if(x_load<=l1) h=h1;
+      else if(x_load<=l2) h=A_pr*x_load+B_pr;
+      else h=h2;
+    }
+    // In SVG: load end at RIGHT (svgX=ml+dw), root at LEFT (svgX=ml)
+    const svgX = ml + (l-x_load)*scX;
+    pts_top.push([svgX, cx-h/2*scH]);
+    pts_bot.push([svgX, cx+h/2*scH]);
+  }
+
+  const toPath=pts=>'M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+  const topPath=toPath(pts_top);
+  const botPath=toPath(pts_bot.slice().reverse());
+
+  // SVG elements
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#e8873a"/>
+    </marker>
+    <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#484848" stroke-width="1.5"/>
+    </pattern>
+  </defs>`;
+
+  // Spring body (filled)
+  svg+=`<path d="${topPath} ${botPath} Z" fill="#2b4a3a" stroke="#4caf7d" stroke-width="1.5"/>`;
+
+  // Dimension lines
+  const y_dim=H-mb+15;
+  // l dimension (full)
+  svg+=`<line x1="${ml}" y1="${y_dim}" x2="${ml+dw}" y2="${y_dim}" stroke="#5c5c5c" stroke-width="1"/>`;
+  svg+=`<line x1="${ml}" y1="${y_dim-5}" x2="${ml}" y2="${y_dim+5}" stroke="#5c5c5c" stroke-width="1"/>`;
+  svg+=`<line x1="${ml+dw}" y1="${y_dim-5}" x2="${ml+dw}" y2="${y_dim+5}" stroke="#5c5c5c" stroke-width="1"/>`;
+  svg+=`<text x="${ml+dw/2}" y="${y_dim+14}" text-anchor="middle" fill="#888" font-size="12" font-family="Courier New">l = ${l} mm</text>`;
+
+  // l2 marker (from load end = right)
+  const x_l2 = ml + (l-l2)*scX;
+  svg+=`<line x1="${x_l2}" y1="${y_dim-12}" x2="${x_l2}" y2="${y_dim+3}" stroke="#f0c040" stroke-width="1" stroke-dasharray="3,2"/>`;
+  svg+=`<text x="${x_l2}" y="${y_dim-16}" text-anchor="middle" fill="#f0c040" font-size="11" font-family="Courier New">l₂=${l2}</text>`;
+
+  if(type==='line' && l1>0){
+    const x_l1 = ml + (l-l1)*scX;
+    svg+=`<line x1="${x_l1}" y1="${y_dim-12}" x2="${x_l1}" y2="${y_dim+3}" stroke="#5b9bd5" stroke-width="1" stroke-dasharray="3,2"/>`;
+    svg+=`<text x="${x_l1+4}" y="${y_dim-16}" text-anchor="start" fill="#5b9bd5" font-size="11" font-family="Courier New">l₁=${l1}</text>`;
+  }
+
+  // h1, h2 labels
+  const x_h1_pos = ml+dw-8;
+  const x_h2_pos = ml+8;
+  svg+=`<line x1="${x_h1_pos}" y1="${cx-h1/2*scH}" x2="${x_h1_pos+16}" y2="${cx-h1/2*scH}" stroke="#888" stroke-width="1"/>`;
+  svg+=`<line x1="${x_h1_pos}" y1="${cx+h1/2*scH}" x2="${x_h1_pos+16}" y2="${cx+h1/2*scH}" stroke="#888" stroke-width="1"/>`;
+  svg+=`<line x1="${x_h1_pos+14}" y1="${cx-h1/2*scH}" x2="${x_h1_pos+14}" y2="${cx+h1/2*scH}" stroke="#888" stroke-width="1"/>`;
+  svg+=`<text x="${x_h1_pos+20}" y="${cx+4}" fill="#888" font-size="11" font-family="Courier New">h₁=${h1}</text>`;
+
+  svg+=`<line x1="${x_h2_pos}" y1="${cx-h2/2*scH}" x2="${x_h2_pos-16}" y2="${cx-h2/2*scH}" stroke="#4caf7d" stroke-width="1"/>`;
+  svg+=`<line x1="${x_h2_pos}" y1="${cx+h2/2*scH}" x2="${x_h2_pos-16}" y2="${cx+h2/2*scH}" stroke="#4caf7d" stroke-width="1"/>`;
+  svg+=`<line x1="${x_h2_pos-14}" y1="${cx-h2/2*scH}" x2="${x_h2_pos-14}" y2="${cx+h2/2*scH}" stroke="#4caf7d" stroke-width="1"/>`;
+  svg+=`<text x="${x_h2_pos-50}" y="${cx+4}" fill="#4caf7d" font-size="11" font-family="Courier New">h₂=${h2}</text>`;
+
+  // Load arrow Fs at right (load end)
+  svg+=`<line x1="${ml+dw+30}" y1="${cx-22}" x2="${ml+dw+30}" y2="${cx-4}" stroke="#e8873a" stroke-width="2" marker-end="url(#arr)"/>`;
+  svg+=`<text x="${ml+dw+30}" y="${cx-28}" text-anchor="middle" fill="#e8873a" font-size="12" font-family="Courier New">Fs</text>`;
+
+  // Support at left (root)
+  svg+=`<rect x="${ml-20}" y="${cx-h2/2*scH-2}" width="20" height="${h2*scH+4}" fill="url(#hatch)" stroke="#484848" stroke-width="1"/>`;
+  svg+=`<line x1="${ml}" y1="${cx-h2/2*scH-4}" x2="${ml}" y2="${cx+h2/2*scH+4}" stroke="#888" stroke-width="2"/>`;
+
+  // Type label
+  const lbl=type==='para'?'抛物线形 (a)':'折线形 (b)';
+  svg+=`<text x="${W/2}" y="15" text-anchor="middle" fill="#888" font-size="12">${lbl} — 图 7-34</text>`;
+  // Centerline
+  svg+=`<line x1="${ml-25}" y1="${cx}" x2="${ml+dw+10}" y2="${cx}" stroke="#333" stroke-width="1" stroke-dasharray="5,3"/>`;
+
+  // x label (from load end)
+  svg+=`<text x="${ml+dw-20}" y="${cx+30}" fill="#5c5c5c" font-size="11" font-family="Courier New">← x</text>`;
+  svg+=`<text x="${ml+dw-14}" y="${cx+42}" fill="#5c5c5c" font-size="11">D</text>`;
+  svg+=`<text x="${ml+4}" y="${cx+42}" fill="#5c5c5c" font-size="11">A</text>`;
+
+  svg+=`</svg>`;
+  return svg;
+}
+
+// ─────────────────────────────────────────────
+// Stress distribution SVG
+// ─────────────────────────────────────────────
+function stressSVG(type, l, l1, l2, h1, h2, Fs, b, A_pr, B_pr, sigMax, sigAllow) {
+  const W=680, H=150, ml=60, mr=20, mt=15, mb=35;
+  const dw=W-ml-mr, dh=H-mt-mb;
+  const N=200;
+  const stressArr=[];
+  for(let i=0;i<=N;i++){
+    const x_load=l1+(l2-l1)*i/N; // x from l1 to l2 (the variable region)
+    let h;
+    if(type==='para') h=Math.max(h2*Math.sqrt(x_load/l2), h1);
+    else { h=A_pr*x_load+B_pr; if(h<h1) h=h1; }
+    const sig=6*Fs*x_load/(b*h*h);
+    stressArr.push({x:x_load, s:sig});
+  }
+  // also add l1 and l2 endpoints
+  stressArr.unshift({x:0.01, s:6*Fs*0.01/(b*h1*h1)});
+  stressArr.push({x:l2+0.01, s:6*Fs*(l2+0.01)/(b*h2*h2)});
+
+  const maxS=Math.max(...stressArr.map(p=>p.s), sigAllow*1.1);
+  const scX=dw/l;
+  const scS=dh/maxS;
+
+  let pts='';
+  const validPts=stressArr.filter(p=>p.x>=0&&p.x<=l);
+  validPts.forEach(p=>{
+    const sx=ml+(l-p.x)*scX; // load end at right
+    const sy=mt+dh-p.s*scS;
+    pts+=pts?` L${sx.toFixed(1)},${sy.toFixed(1)}`:`M${sx.toFixed(1)},${sy.toFixed(1)}`;
+  });
+
+  const yAllow=mt+dh-sigAllow*scS;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+  // allow line
+  svg+=`<line x1="${ml}" y1="${yAllow}" x2="${ml+dw}" y2="${yAllow}" stroke="#e05555" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  svg+=`<text x="${ml+dw+2}" y="${yAllow+4}" fill="#e05555" font-size="11">[σ]=${sigAllow}</text>`;
+  // stress curve
+  if(pts) svg+=`<path d="${pts}" fill="none" stroke="#f0c040" stroke-width="2"/>`;
+  // max stress line
+  const yMax=mt+dh-sigMax*scS;
+  svg+=`<line x1="${ml}" y1="${yMax}" x2="${ml+dw}" y2="${yMax}" stroke="#e8873a" stroke-width="1" stroke-dasharray="4,2"/>`;
+  svg+=`<text x="${ml+4}" y="${yMax-3}" fill="#e8873a" font-size="11">σ_max=${sigMax.toFixed(1)}</text>`;
+  // axes
+  svg+=`<line x1="${ml}" y1="${mt}" x2="${ml}" y2="${mt+dh}" stroke="#484848" stroke-width="1"/>`;
+  svg+=`<line x1="${ml}" y1="${mt+dh}" x2="${ml+dw}" y2="${mt+dh}" stroke="#484848" stroke-width="1"/>`;
+  // axis labels
+  svg+=`<text x="${ml-5}" y="${mt+dh/2}" fill="#888" font-size="11" text-anchor="middle" transform="rotate(-90,${ml-5},${mt+dh/2})">σ (MPa)</text>`;
+  svg+=`<text x="${ml+dw/2}" y="${H-2}" fill="#888" font-size="11" text-anchor="middle">x（从负荷端量起）</text>`;
+  svg+=`</svg>`;
+  return svg;
+}
+
+// ─────────────────────────────────────────────
+// PARABOLIC calculation
+// ─────────────────────────────────────────────
+function calcPara(){
+  const E=V('p_E'),xi=V('p_xi'),b=V('p_b'),n=VI('p_n');
+  const h1=V('p_h1'),h2=V('p_h2'),l=V('p_l'),l2=V('p_l2');
+  const Fs=V('p_Fs'),sigAllow=V('p_sig');
+  const l1=l-l2;
+  const J2=b*h2**3/12;
+  const k=1-(h1/h2)**3;
+  const c_single=6*E*J2*xi/(l**3*(1+(l2/l)**3*k));
+  const c_total=c_single*n;
+  const sigma=6*Fs*l2/(b*h2**2);
+  const pass=sigma<=sigAllow;
+
+  const svgStr=buildSVG('para',l,l1,l2,h1,h2,Fs,0,0);
+  const sigSvg=stressSVG('para',l,l1,l2,h1,h2,Fs,b,0,0,sigma,sigAllow);
+
+  document.getElementById('para-result').innerHTML=`
+    <div class="spring-canvas">${svgStr}</div>
+    <div class="mrow">
+      <div class="mc gr"><div class="ml">单片刚度 c</div><div class="mv">${fmt(c_single,3)}<span class="mu"> N/mm</span></div></div>
+      <div class="mc bl"><div class="ml">总刚度 (×${n})</div><div class="mv">${fmt(c_total,3)}<span class="mu"> N/mm</span></div></div>
+      <div class="mc ${pass?'gr':'re'}"><div class="ml">最大应力 σ_max</div><div class="mv">${fmt(sigma,2)}<span class="mu"> MPa</span></div></div>
+      <div class="mc"><div class="ml">许用应力 [σ]</div><div class="mv">${fmt(sigAllow,0)}<span class="mu"> MPa</span></div></div>
+    </div>
+    <div class="card"><div class="ch gr">逐步计算过程（抛物线形）</div><div class="cb"><div class="steps">
+      ${step(1,'J₂ = bh₂³/12',`= ${b}×${h2}³/12`,fmt(J2,2),'mm⁴')}
+      ${step(2,'k = 1−(h₁/h₂)³',`= 1−(${h1}/${h2})³ = 1−${fmt((h1/h2)**3,4)}`,fmt(k,5),'')}
+      ${step(3,'(l₂/l)³·k',`= (${l2}/${l})³ × ${fmt(k,4)} = ${fmt((l2/l)**3,4)} × ${fmt(k,4)}`,fmt((l2/l)**3*k,4),'')}
+      ${step(4,'分母 l³[1+(l₂/l)³k]',`= ${l}³ × (1 + ${fmt((l2/l)**3*k,4)})`,fmt(l**3*(1+(l2/l)**3*k),2),'')}
+      ${step(5,'6EJ₂ξ',`= 6 × ${E} × ${fmt(J2,2)} × ${xi}`,fmt(6*E*J2*xi,2),'')}
+      ${step(6,'单片刚度 c（式7-18）',`= ${fmt(6*E*J2*xi,2)} / ${fmt(l**3*(1+(l2/l)**3*k),2)}`,fmt(c_single,4),'N/mm')}
+      ${n>1?step(7,`总刚度 c_总 = ${n}c`,`= ${n} × ${fmt(c_single,4)}`,fmt(c_total,4),'N/mm'):''}
+      ${step(n>1?8:7,'σ = 6F_s·l₂/(b·h₂²)（式7-19）',`= 6×${Fs}×${l2}/(${b}×${h2}²)`,fmt(sigma,2),'MPa')}
+    </div></div></div>
+    <div class="plot-wrap"><div class="plot-title">应力沿弹簧长度分布（抛物线区段内应力均匀）</div>${sigSvg}</div>
+    <div class="banner ${pass?'pass':'fail'}">
+      <span class="bico">${pass?'✅':'❌'}</span>
+      <div>
+        <div class="btit">${pass?'设计安全，强度满足要求':'设计不安全，强度不足'}</div>
+        <div class="bsub">σ_max = <b>${fmt(sigma,2)} MPa</b> ${pass?'≤':'>'} [σ] = <b>${sigAllow} MPa</b>
+        &nbsp;|&nbsp; 安全裕度 ${fmt((sigAllow-sigma)/sigAllow*100,1)}%<br>
+        抛物线形少片簧抛物区段内应力<b>均匀一致</b>，是理想的等应力弹簧形式</div>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+// LINEAR calculation
+// ─────────────────────────────────────────────
+function calcLine(){
+  const E=V('l_E'),xi=V('l_xi'),b=V('l_b'),n=VI('l_n');
+  const h1=V('l_h1'),h2=V('l_h2'),l=V('l_l'),l1=V('l_l1'),l2=V('l_l2');
+  const Fs=V('l_Fs'),sigAllow=V('l_sig');
+
+  const J2=b*h2**3/12;
+  const A_pr=(h2-h1)/(l2-l1);
+  const B_pr=(h1*l2-h2*l1)/(l2-l1);
+  const alpha=l1/l2, beta=h1/h2, gamma=alpha/beta;
+
+  // k' formula 7-20
+  let k_prime;
+  try{
+    const ratio3=Math.pow((1-alpha)/(1-beta),3);
+    const inner=2*Math.log(beta)+4*(1-beta)*(1-gamma)/(1-alpha)-Math.pow((1-gamma)/(1-alpha),2)*(1-beta*beta);
+    k_prime=Math.pow(gamma,3)-(3/2)*ratio3*inner-1;
+  }catch(e){k_prime=0;}
+
+  const c_single=6*E*J2*xi/(l**3*(1+(l2/l)**3*k_prime));
+  const c_total=c_single*n;
+
+  // max stress condition
+  const cond=l1>l2*(2*beta-1)||2*h1<h2;
+  const x_opt=B_pr/A_pr;
+  let sigma_max, stress_loc;
+  if(cond){
+    sigma_max=3*Fs/(2*b*A_pr*B_pr);
+    stress_loc=`x=B'/A'=${fmt(x_opt,1)} mm，hₓ=2B'=${fmt(2*B_pr,2)} mm （式7-21）`;
+  } else {
+    sigma_max=3*Fs*l2/(2*b*h2**2);
+    stress_loc=`B 点（x=${l2} mm，h=h₂=${h2} mm）（式7-22）`;
+  }
+  const pass=sigma_max<=sigAllow;
+  const svgStr=buildSVG('line',l,l1,l2,h1,h2,Fs,A_pr,B_pr);
+  const sigSvg=stressSVG('line',l,l1,l2,h1,h2,Fs,b,A_pr,B_pr,sigma_max,sigAllow);
+
+  const condTxt=cond?`l₁=${l1} > l₂(2β−1)=${fmt(l2*(2*beta-1),1)} ✓ 或 2h₁=${2*h1} < h₂=${h2} ✓`
+    :`l₁=${l1} ≤ l₂(2β−1)=${fmt(l2*(2*beta-1),1)}`;
+
+  document.getElementById('line-result').innerHTML=`
+    <div class="spring-canvas">${svgStr}</div>
+    <div class="mrow">
+      <div class="mc gr"><div class="ml">单片刚度 c</div><div class="mv">${fmt(c_single,3)}<span class="mu"> N/mm</span></div></div>
+      <div class="mc bl"><div class="ml">总刚度 (×${n})</div><div class="mv">${fmt(c_total,3)}<span class="mu"> N/mm</span></div></div>
+      <div class="mc ${pass?'gr':'re'}"><div class="ml">最大应力 σ_max</div><div class="mv">${fmt(sigma_max,2)}<span class="mu"> MPa</span></div></div>
+      <div class="mc"><div class="ml">许用应力 [σ]</div><div class="mv">${fmt(sigAllow,0)}<span class="mu"> MPa</span></div></div>
+    </div>
+    <div class="card"><div class="ch bl">逐步计算过程（折线形）</div><div class="cb"><div class="steps">
+      ${step(1,'A\' = (h₂−h₁)/(l₂−l₁)',`= (${h2}−${h1})/(${l2}−${l1})`,fmt(A_pr,5),'mm⁻¹')}
+      ${step(2,"B' = (h₁l₂−h₂l₁)/(l₂−l₁)",`= (${h1}×${l2}−${h2}×${l1})/(${l2}−${l1})`,fmt(B_pr,4),'mm')}
+      ${step(3,'α=l₁/l₂, β=h₁/h₂, γ=α/β',`α=${fmt(alpha,4)}，β=${fmt(beta,4)}，γ=${fmt(gamma,4)}`,'','')}
+      ${step(4,'k\'（式7-20）','见公式',fmt(k_prime,5),'')}
+      ${step(5,'J₂ = bh₂³/12',`= ${b}×${h2}³/12`,fmt(J2,2),'mm⁴')}
+      ${step(6,'c（式7-18，代入k\'）',`= 6×${E}×${fmt(J2,1)}×${xi} / [${l}³×(1+(${l2}/${l})³×${fmt(k_prime,4)})]`,fmt(c_single,4),'N/mm')}
+      ${n>1?step(7,`总刚度 = ${n}c`,`= ${n} × ${fmt(c_single,4)}`,fmt(c_total,4),'N/mm'):''}
+      ${step(n>1?8:7,'应力条件判断',condTxt,cond?'式7-21':'式7-22','')}
+      ${step(n>1?9:8,'最大应力位置',stress_loc,fmt(sigma_max,2),'MPa')}
+    </div></div></div>
+    <div class="plot-wrap"><div class="plot-title">应力沿弹簧长度分布（最大应力点：${stress_loc}）</div>${sigSvg}</div>
+    <div class="banner ${pass?'pass':'fail'}">
+      <span class="bico">${pass?'✅':'❌'}</span>
+      <div>
+        <div class="btit">${pass?'设计安全，强度满足要求':'设计不安全，强度不足'}</div>
+        <div class="bsub">σ_max = <b>${fmt(sigma_max,2)} MPa</b> ${pass?'≤':'>'} [σ] = <b>${sigAllow} MPa</b>
+        &nbsp;|&nbsp; 安全裕度 ${fmt((sigAllow-sigma_max)/sigAllow*100,1)}%<br>
+        最大应力位置：${stress_loc}</div>
+      </div>
+    </div>`;
+}
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+if (e.key === 'F12' || 
+(e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+(e.ctrlKey && e.key === 'U') ||
+(e.ctrlKey && e.key === 'S')) {
+e.preventDefault();
+return false;
+}
+});
+
+</script>
+<script>
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U') ||
+        (e.ctrlKey && e.key === 'S')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+</script>
+
+</body>
+</html>
